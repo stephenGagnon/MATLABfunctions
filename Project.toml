@@ -2,3 +2,6 @@ name = "MATLABfunctions"
 uuid = "b30ad2df-b50a-4868-b889-ccad604802ef"
 authors = ["Stephen Gagnon <srgagnon@buffalo.edu>"]
 version = "0.1.0"
+
+[deps]
+MATLAB = "10e44e05-a98a-55b3-a45b-ba969058deb6"
