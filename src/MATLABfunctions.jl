@@ -1,7 +1,15 @@
 module MATLABfunctions
 using MATLAB
 
-export MATLABhistogram, plot3, MRPScatterPlot, plotSat, multiQuiverPlot3
+export MATLABhistogram, plot3, MRPScatterPlot, plotSat, multiQuiverPlot3, closeAll
+
+struct spaceScenario
+    obsNo
+    C
+    d
+    sunVec
+    obsVecs
+end
 
 function MATLABHistogram(data,binNo)
 
@@ -73,11 +81,17 @@ function MRPScatterPlot(p,c)
     """)
 end
 
-function plotSat(obj, scen, A)
+function plotSat(obj, scenI, A)
 
     # if typeof(s) != MSession
     #
     # end
+    if typeof(scenI.obsVecs) == Array{Array{Float64,1},1}
+        obsVecsm = hcat(scenI.obsVecs...)
+        scen = spaceScenario(scenI.obsNo,scenI.C,scenI.d[:],scenI.sunVec,obsVecsm)
+    else
+        scen = scenI
+    end
     @mput obj
     # put_variable(s, :obj, mxarray(obj))
     @mput scen
@@ -98,7 +112,7 @@ function plotSat(obj, scen, A)
 end
 
 function multiQuiverPlot3(v,p,c=nothing)
-    
+
     @mput v
     @mput p
 
@@ -120,6 +134,11 @@ function multiQuiverPlot3(v,p,c=nothing)
         end
         """)
     end
+end
+
+function closeAll()
+    eval_string("""
+    close all""")
 end
 
 end # module
