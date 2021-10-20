@@ -1,7 +1,8 @@
 module MATLABfunctions
 using MATLAB
+# using Infiltrator
 
-export MATLABhistogram, plot3, MRPScatterPlot, plotSat, multiQuiverPlot3, closeAll
+export MATLABhistogram, plot3, MRPScatterPlot, plotSat, multiQuiverPlot3, closeAll, saveData
 
 struct spaceScenario
     obsNo
@@ -139,6 +140,21 @@ end
 function closeAll()
     eval_string("""
     close all""")
+end
+
+function saveData(filename, varnames, data; path = "/Users/stephengagnon/matlab/storage/dataFromJulia/")
+
+    @mput filename
+    @mput path
+
+    mdata = Dict(varnames[i] => data[i] for i = 1:length(varnames))
+    @mput mdata
+
+    eval_string("""
+    fullPath = string(strcat(path,filename))
+    mdata
+    save(fullPath,'mdata')
+    """)
 end
 
 end # module
