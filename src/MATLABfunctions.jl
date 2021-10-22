@@ -2,7 +2,7 @@ module MATLABfunctions
 using MATLAB
 # using Infiltrator
 
-export MATLABhistogram, plot3, MRPScatterPlot, plotSat, multiQuiverPlot3, closeAll, saveData
+export MATLABhistogram, plot3, MRPScatterPlot, plotSat, multiQuiverPlot3, closeAll, saveData, imagesc
 
 struct spaceScenario
     obsNo
@@ -135,6 +135,12 @@ function multiQuiverPlot3(v,p,c=nothing)
         end
         """)
     end
+end
+
+function imagesc(M)
+    @mput M
+    eval_string(""" imagesc(M)
+    """)
 end
 
 function closeAll()
