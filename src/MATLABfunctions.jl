@@ -137,9 +137,22 @@ function multiQuiverPlot3(v,p,c=nothing)
     end
 end
 
-function imagesc(M)
+function imagesc(x,y,M; xlabelstring = "x",ylabelstring = "y",titlestring = "")
     @mput M
-    eval_string(""" imagesc(M)
+    @mput x
+    @mput y
+    @mput xlabelstring
+    @mput ylabelstring
+    @mput titlestring
+
+    eval_string("""
+    figure
+    imagesc(x,y,M)
+    xlabel(xlabelstring)
+    ylabel(ylabelstring)
+    title(titlestring)
+    colorbar
+    set(gca,'YDir','normal')
     """)
 end
 
