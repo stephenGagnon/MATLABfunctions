@@ -137,13 +137,14 @@ function multiQuiverPlot3(v,p,c=nothing)
     end
 end
 
-function imagesc(x,y,M; xlabelstring = "x",ylabelstring = "y",titlestring = "")
+function imagesc(x,y,M; xlabelstring = "x",ylabelstring = "y",titlestring = "",clim = "auto")
     @mput M
     @mput x
     @mput y
     @mput xlabelstring
     @mput ylabelstring
     @mput titlestring
+    @mput clim
 
     eval_string("""
     figure
@@ -152,6 +153,7 @@ function imagesc(x,y,M; xlabelstring = "x",ylabelstring = "y",titlestring = "")
     ylabel(ylabelstring)
     title(titlestring)
     colorbar
+    caxis(clim)
     set(gca,'YDir','normal')
     """)
 end
@@ -175,5 +177,6 @@ function saveData(filename, varnames, data; path = "/Users/stephengagnon/matlab/
     save(fullPath,'mdata')
     """)
 end
+
 
 end # module
