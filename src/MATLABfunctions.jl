@@ -2,7 +2,7 @@ module MATLABfunctions
 using MATLAB
 # using Infiltrator
 
-export MATLABhistogram, plot3, MRPScatterPlot, plotSat, multiQuiverPlot3, closeAll, saveData, imagesc, plot_MATLAB, subplot_MATLAB
+export MATLABhistogram, plot3, MRPScatterPlot, plotSat, multiQuiverPlot3, closeAll, saveData, imagesc, plot_MATLAB, subplot_MATLAB, ylim, xlim
 
 struct spaceScenario
     obsNo
@@ -26,7 +26,7 @@ end
 
 function plot3(p, c=nothing)
 
-    if c == nothing
+    if c === nothing
         @mput p
 
         eval_string("""
@@ -117,7 +117,7 @@ function multiQuiverPlot3(v, p, c=nothing)
     @mput v
     @mput p
 
-    if c == nothing
+    if c === nothing
         eval_string("""
         figure
         hold on
@@ -163,12 +163,26 @@ function closeAll()
     close all""")
 end
 
+function ylim(limits)
+    @mput limits
+    eval_string(
+        raw"ylim(limits)"
+    )
+end
+
+function xlim(limits)
+    @mput limits
+    eval_string(
+        raw"xlim(limits)"
+    )
+end
+
 function saveData(filename, varnames, data; path="/Users/stephengagnon/matlab/storage/dataFromJulia/")
 
     @mput filename
     @mput path
 
-    mdata = Dict(varnames[i] => data[i] for i = 1:length(varnames))
+    mdata = Dict(varnames[i] => data[i] for i = eachindex(varnames))
     @mput mdata
 
     eval_string("""
@@ -178,7 +192,61 @@ function saveData(filename, varnames, data; path="/Users/stephengagnon/matlab/st
     """)
 end
 
-function plot_MATLAB(t, x, varin...; title_string="", xlabel_string="", ylabel_string="", xlim_val=nothing, ylim_val=nothing, grid_check=false)
+function multiplot_MATLAB(t, x, linespec=nothing; title_string="", xlabel_string="", ylabel_string="", legend_vals=nothing, xlim_val=nothing, ylim_val=nothing, grid_check=false)
+
+    @mput t
+    @mput x
+    @mput linespec
+    @mput title_string
+    @mput xlabel_string
+    @mput ylabel_string
+    @mput legend_vals
+    @mput xlim_val
+    @mput ylim_val
+
+    @mput grid_check
+
+    # eval_string("""
+    # save("/Users/stephengagnon/matlab/storage/dataFromJulia/test",'t','x','linespec')
+    # """)
+
+    eval_string(
+        raw"figure
+        if class(linespec) == 'cell'
+            hold on
+            for i = 1:size(x,1)
+                plot(t,x(i,:),linespec{i,:});
+            end
+            hold off
+        else
+            hold on
+            for i = 1:size(x,1)
+                plot(t,x(i,:));
+            end
+            hold off
+        end
+        title(title_string);
+        xlabel(xlabel_string);
+        ylabel(ylabel_string);
+
+        if class(xlim_val) == 'cell'
+            xlim(xlim_val);
+        end
+        if class(ylim_val) == 'cell'
+            ylim(ylim_val);
+        end
+
+        if grid_check;
+            grid on; 
+        end
+
+        if class(legend_vals) ~= 'struct'
+            legend(legend_vals)
+        end"
+    )
+end
+
+function plot_MATLAB(t, x, varin...; title_string="", xlabel_string="", ylabel_string="", legend_vals=nothing, xlim_val=nothing, ylim_val=nothing, grid_check=false)
     linespec = Array{Any,1}(undef, length(varin))
     linespec[:] .= varin[:]
     @mput t
@@ -187,6 +255,7 @@ function plot_MATLAB(t, x, varin...; title_string="", xlabel_string="", ylabel_s
     @mput title_string
     @mput xlabel_string
     @mput ylabel_string
+    @mput legend_vals
     if !isnothing(xlim_val)
         @mput xlim_val
     end
@@ -195,14 +264,41 @@ function plot_MATLAB(t, x, varin...; title_string="", xlabel_string="", ylabel_s
     end
     @mput grid_check
 
+    eval_string(
+            raw"figure
+            plot(t,x,linespec{:});
+            title(title_string);
+            xlabel(xlabel_string);
+            ylabel(ylabel_string);
+
+            if grid_check;
+                grid on; 
+            end
+
+            if strcmp(class(legend_vals),'cell')
+                legend(legend_vals)
+            end"
+        )
+
     if !isnothing(xlim_val) && !isnothing(ylim_val)
-        eval_string("plot(t,x,linespec{:}); title(title_string); xlabel(xlabel_string); ylabel(ylabel_string); xlim(xlim_val); ylim(ylim_val); if grid_check; grid on; end")
+        eval_string(
+            raw"
+            xlim(xlim_val);
+            ylim(ylim_val);
+            "
+        )
     elseif !isnothing(xlim_val)
-        eval_string("plot(t,x,linespec{:}); title(title_string); xlabel(xlabel_string); ylabel(ylabel_string); xlim(xlim_val); if grid_check; grid on; end")
+        eval_string(
+            raw"
+            xlim(xlim_val);
+            "
+        )
     elseif !isnothing(ylim_val)
-        eval_string("plot(t,x,linespec{:}); title(title_string); xlabel(xlabel_string); ylabel(ylabel_string); ylim(ylim_val); if grid_check; grid on; end")
-    elseif isnothing(xlim_val) && isnothing(ylim_val)
-        eval_string("plot(t,x,linespec{:}); title(title_string); xlabel(xlabel_string); ylabel(ylabel_string); if grid_check; grid on; end")
+        eval_string(
+            raw"
+            ylim(ylim_val);
+            "
+        )
     end
 end
 
@@ -232,34 +328,37 @@ function subplot_MATLAB(t, x, linespec; title_string=emptyStringArray(size(t)), 
         f = figure;
         for i = 1:n
             for j = 1:m
-                subplot(n,m,count)
-                hold on
                 
-                for k = 1:length( x{i,j} )
-                    plot(t{i,j}, x{i,j}{k} , linespec{i,j}{k}{:})
+                if ~isa(t{i,j},'logical')
+                    subplot(n,m,count)
+                    hold on
+                    
+                    for k = 1:length( x{i,j} )
+                        plot(t{i,j}, x{i,j}{k} , linespec{i,j}{k}{:})
+                    end
+
+                    title(title_string{i,j}); 
+                    xlabel(xlabel_string{i,j}); 
+                    ylabel(ylabel_string{i,j});
+
+                    if class(xlim_val) == 'cell'
+                        xlim(xlim_val{i,j});
+                    end
+                    if class(ylim_val) == 'cell'
+                        ylim(ylim_val{i,j});
+                    end
+
+                    if grid_check(i,j)
+                            grid on
+                    end
+
+                    hold off
+                    count = count + 1;
                 end
-    
-                title(title_string{i,j}); 
-                xlabel(xlabel_string{i,j}); 
-                ylabel(ylabel_string{i,j});
-    
-                if class(xlim_val) == 'cell'
-                    xlim(xlim_val{i,j});
-                end
-                if class(ylim_val) == 'cell'
-                    ylim(ylim_val{i,j});
-                end
-    
-                if grid_check(i,j)
-                        grid on
-                end
-    
-                hold off
-                count = count + 1;
             end
         end
         set(f,'position',[1 1 1792 1016])
-    
+
         ")
 end
 
