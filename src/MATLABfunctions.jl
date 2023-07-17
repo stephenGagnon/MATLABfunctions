@@ -2,7 +2,7 @@ module MATLABfunctions
 using MATLAB
 # using Infiltrator
 
-export MATLABhistogram, plot3, MRPScatterPlot, plotSat, multiQuiverPlot3, closeAll, saveData, imagesc, plot_MATLAB, subplot_MATLAB, ylim, xlim
+export MATLABhistogram, plot3, MRPScatterPlot, plotSat, multiQuiverPlot3, closeAll, saveData, imagesc, plot_MATLAB, subplot_MATLAB, ylim, xlim, multiplot_MATLAB
 
 struct spaceScenario
     obsNo
@@ -60,6 +60,39 @@ function plot3(p, c=nothing)
 
         """)
     end
+end
+
+function contour4D(x, y, z, f, cvals)
+
+    @mput x
+    @mput y
+    @mput z
+    @mput f
+    @mput cvals
+
+    eval_string("""
+    legendstring = {};
+
+    % [xg,yg,zg] = meshgrid(x,y,z);
+    figure
+    hold on
+    for i = 1:length(cvals)
+        level = cvals(i);
+        p = patch(isosurface(x,y,z,f,level));
+        p.FaceVertexCData = level;
+        p.FaceColor = 'flat';
+        p.EdgeColor = 'none';
+        p.FaceAlpha = 0.3;
+        legendstring{end + 1} = num2str(level);
+    end
+    hold off
+    legend(legendstring)
+    xlabel('x')
+    ylabel('y')
+    zlabel('z')
+    axis equal
+    """)
+
 end
 
 function MRPScatterPlot(p, c)
@@ -209,10 +242,10 @@ function multiplot_MATLAB(t, x, linespec=nothing; title_string="", xlabel_string
     # eval_string("""
     # save("/Users/stephengagnon/matlab/storage/dataFromJulia/test",'t','x','linespec')
     # """)
-
     eval_string(
         raw"figure
-        if class(linespec) == 'cell'
+
+        if strcmp(class(linespec), 'cell')
             hold on
             for i = 1:size(x,1)
                 plot(t,x(i,:),linespec{i,:});
@@ -229,10 +262,10 @@ function multiplot_MATLAB(t, x, linespec=nothing; title_string="", xlabel_string
         xlabel(xlabel_string);
         ylabel(ylabel_string);
 
-        if class(xlim_val) == 'cell'
+        if strcmp(class(xlim_val), 'cell')
             xlim(xlim_val);
         end
-        if class(ylim_val) == 'cell'
+        if strcmp(class(ylim_val), 'cell')
             ylim(ylim_val);
         end
 
@@ -240,7 +273,7 @@ function multiplot_MATLAB(t, x, linespec=nothing; title_string="", xlabel_string
             grid on; 
         end
 
-        if class(legend_vals) ~= 'struct'
+        if ~strcmp(class(legend_vals), 'cell')
             legend(legend_vals)
         end"
     )
